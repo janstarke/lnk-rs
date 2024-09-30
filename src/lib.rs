@@ -346,16 +346,17 @@ impl ShellLink {
                     .expect("missing local base path").to_string()
             };
 
-            let separator = if base_path.ends_with('\\') {
+            let common_path = info
+                .common_path_suffix_unicode()
+                .as_ref()
+                .map(|s| &s[..])
+                .unwrap_or(info.common_path_suffix());
+
+            let separator = if common_path.is_empty() || base_path.ends_with('\\') {
                 ""
             } else {
                 "\\"
             };
-
-            let common_path = info.common_path_suffix_unicode()
-                .as_ref()
-                .map(|s| &s[..])
-                .unwrap_or(info.common_path_suffix());
 
             Some(format!("{base_path}{separator}{common_path}"))
         } else {
