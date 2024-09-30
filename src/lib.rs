@@ -282,7 +282,7 @@ impl ShellLink {
 
     /// Open and parse a shell link
     pub fn open<P: AsRef<std::path::Path>>(path: P, default_codepage: &'static Encoding) -> Result<Self, Error> {
-        debug!("Opening {:?}", path.as_ref());
+        trace!("Opening {:?}", path.as_ref());
         let mut reader = BufReader::new(File::open(path)?);
         //let mut data = vec![];
         trace!("Reading file.");
@@ -293,22 +293,22 @@ impl ShellLink {
         //    return Err(Error::NotAShellLinkError);
         //}
         let shell_link_header: ShellLinkHeader = reader.read_le()?;
-        debug!("Shell header: {:#?}", shell_link_header);
+        trace!("Shell header: {:#?}", shell_link_header);
 
         let mut linktarget_id_list = None;
         let link_flags = *shell_link_header.link_flags();
         if link_flags.contains(LinkFlags::HAS_LINK_TARGET_ID_LIST) {
-            debug!("A LinkTargetIDList is marked as present. Parsing now at position 0x{:0x}", reader.stream_position()?);
+            trace!("A LinkTargetIDList is marked as present. Parsing now at position 0x{:0x}", reader.stream_position()?);
             let list: LinkTargetIdList = reader.read_le()?;
-            debug!("{:?}", list);
+            trace!("{:?}", list);
             linktarget_id_list = Some(list);
         }
 
         let mut link_info = None;
         if link_flags.contains(LinkFlags::HAS_LINK_INFO) {
-            debug!("LinkInfo is marked as present. Parsing now at position 0x{:0x}", reader.stream_position()?);
+            trace!("LinkInfo is marked as present. Parsing now at position 0x{:0x}", reader.stream_position()?);
             let info: LinkInfo = reader.read_le_args((default_codepage,))?;
-            debug!("{:?}", info);
+            trace!("{:?}", info);
             link_info = Some(info);
         }
 
@@ -346,16 +346,17 @@ impl ShellLink {
                     .expect("missing local base path").to_string()
             };
 
-            let separator = if base_path.ends_with('\\') {
+            let common_path = info
+                .common_path_suffix_unicode()
+                .as_ref()
+                .map(|s| &s[..])
+                .unwrap_or(info.common_path_suffix());
+
+            let separator = if common_path.is_empty() || base_path.ends_with('\\') {
                 ""
             } else {
                 "\\"
             };
-
-            let common_path = info.common_path_suffix_unicode()
-                .as_ref()
-                .map(|s| &s[..])
-                .unwrap_or(info.common_path_suffix());
 
             Some(format!("{base_path}{separator}{common_path}"))
         } else {
