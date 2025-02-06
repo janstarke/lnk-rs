@@ -140,8 +140,7 @@ pub struct LinkInfo {
     /// CommonPathSuffixOffset (4 bytes): A 32-bit, unsigned integer that
     /// specifies the location of the CommonPathSuffix field. This value is
     /// an offset, in bytes, from the start of the LinkInfo structure.
-    #[br(assert(common_path_suffix_offset < link_info_size &&
-                common_path_suffix_offset >= link_info_header_size))]
+    #[br(assert(common_path_suffix_offset < link_info_size && common_path_suffix_offset >= link_info_header_size))]
     common_path_suffix_offset: u32,
 
     /// LocalBasePathOffsetUnicode (4 bytes): An optional, 32-bit, unsigned
